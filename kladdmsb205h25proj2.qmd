@@ -1,0 +1,296 @@
+---
+title: "Proj2 h25 msb205"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(sf)
+library(rmapshaper)
+library(tmap)
+library(rnaturalearth)
+options(
+  paged.print = FALSE,
+  digits = 4
+)
+```
+
+```{r}
+Norge_fylke <- read_sf("Norge_fylke.gpkg") %>% 
+  ms_simplify(
+    keep = 0.001,
+    keep_shapes = TRUE
+    )
+```
+
+```{r}
+Norge_fylke |> 
+  print(width = 70
+        )
+```
+
+```{r}
+Norge_fylke |> 
+  ggplot() +
+  geom_sf()
+```
+
+```{r}
+p1 <- Norge_fylke %>% 
+  select(fnr) %>%
+  tm_shape() +
+  tm_fill() +
+  tm_borders() +
+  tm_graticules(col = "gray90") +
+  tm_title(
+    text = "EPSG:4326 WGS 84",
+    position = "top"
+    ) +
+  tm_compass(
+    type = "8star",
+    position = c("left", "top")
+    ) +
+  tm_scalebar(
+    breaks = c(0, 100, 200), 
+    text.size = 1
+    )
+```
+
+```{r}
+p2 <- Norge_fylke %>% 
+  select(fnr) %>%
+  st_transform(5972) %>% 
+  tm_shape() +
+  tm_fill() +
+  tm_grid(col = "gray90") +
+  tm_borders() +
+  tm_title(
+    text = "EPSG:5972\n
+    ETRS89 / UTM zone 32 + NN2000 height",
+    position = "top"
+    ) +
+  tm_compass(
+    type = "8star",
+    position = c("left", "top")
+    ) +
+  tm_scalebar(
+    breaks = c(0, 100, 200),
+    text.size = 1
+    )
+```
+
+```{r}
+p2
+```
+
+```{r}
+p3 <- Norge_fylke %>% 
+  select(fnr) %>%
+  st_transform(5973) %>% 
+  tm_shape() +
+  tm_fill() +
+  tm_grid(col = "gray90") +
+  tm_borders() +
+  tm_title(
+    "EPSG:5973\n
+    ETRS89 / UTM zone 33 + NN2000 height",
+    position = "top"
+    ) +
+  tm_compass(
+    type = "8star", 
+    position = c("left", "top")
+    ) +
+  tm_scale_bar(
+    breaks = c(0, 100, 200),
+    text.size = 1
+    )
+```
+
+```{r}
+p4 <- Norge_fylke %>% 
+  select(fnr) %>%
+  st_transform(5975) %>% 
+  tm_shape() +
+  tm_fill() +
+  tm_grid(col = "gray90") +
+  tm_borders() +
+  tm_title(
+    "EPSG:5975\n 
+    ETRS89 / UTM zone 35 + NN2000 height",
+    position = "top"
+    ) +
+  tm_compass(
+    type = "8star", 
+    position = c("left", "top")) +
+  tm_scalebar(
+    breaks = c(0, 100, 200), 
+    text.size = 1
+    )
+```
+
+```{r}
+#| warning: false
+#| message: false
+tmap_arrange(p1, p2, p3, p4)
+```
+
+```{r}
+Norge_fylke %>% 
+  select(fnr, navn) %>%
+  st_transform(5972) %>%
+  mutate(
+    area = st_area(.),
+    area_km2 = units::set_units(st_area(.), km^2)
+  ) |> 
+  select(navn, area, area_km2) |> 
+  st_drop_geometry() |>  
+  print(width = 75)
+```
+
+```{r}
+Norge_fylke %>% 
+  select(fnr, navn) %>%
+  st_transform(5973) %>%
+  mutate(
+    area = st_area(.),
+    area_km2 = units::set_units(st_area(.), km^2)
+  ) |> 
+  select(navn, area, area_km2) |> 
+  st_drop_geometry() |> 
+  print(width = 75)
+```
+
+```{r}
+Norge_fylke %>% 
+  select(fnr, navn) %>%
+  st_transform(5975) %>%
+  mutate(
+    area = st_area(.),
+    area_km2 = units::set_units(st_area(.), km^2)
+  ) |> 
+  select(navn, area, area_km2) |> 
+  st_drop_geometry() |> 
+  print(width = 75)
+```
+
+5972: 4060714721
+
+5973; 4063333065
+
+5975: 4137503896
+
+```{r}
+# query="SELECT * FROM Norge_fylke WHERE navn 
+# IN ('Østfold', 'Akershus', 'Oslo', 'Hedmark', 'Oppland', 
+# 'Buskerud', 'Vestfold', 'Telemark', 'Aust-Agder', 
+# 'Vest-Agder', 'Rogaland', 'Hordaland', 'Sogn og Fjordane', 
+# 'Møre og Romsdal', 'Sør-Trøndelag')")
+# OR
+Norge_fylke_syd <- read_sf(
+  "Norge_fylke.gpkg",
+  query = "SELECT * FROM Norge_fylke WHERE navn 
+  NOT IN ('Nord-Trøndelag', 'Nordland',
+  'Troms', 'Finnmark')") %>% 
+  ms_simplify(
+    keep = 0.01, keep_shapes = TRUE
+    )
+```
+
+```{r}
+Norge_fylke_syd |> 
+  ggplot() +
+  geom_sf()
+```
+
+```{r}
+Norge_fylke_syd |> 
+  st_transform(5972) |> 
+  ggplot() +
+  geom_sf() +
+  coord_sf(datum = NULL)
+```
+
+```{r}
+read_sf(
+  "Norge_fylke.gpkg"
+  ) %>% 
+  ms_simplify(
+    keep = 0.01, keep_shapes = TRUE
+    ) |> 
+  st_transform(5973) |> 
+  ggplot() +
+  geom_sf() +
+  coord_sf(datum = NULL)
+```
+
+```{r}
+Norge_fylke %>% 
+  st_transform(5975) |> 
+  ggplot() +
+  geom_sf() +
+  coord_sf(datum = NULL)
+```
+
+```{r}
+# Rogaland
+Norge_fylke_syd %>% 
+  select(fnr, navn) %>%
+  filter(fnr %in% c('10', '11', '12')) %>% 
+  st_transform(5972) %>%
+  mutate(
+    area = st_area(.),
+    area_km2 = units::set_units(st_area(.), km^2)
+  ) |> 
+  select(navn, area, area_km2) |> 
+  st_drop_geometry()
+```
+
+## Projeksjoner for verden
+
+```{r}
+# read in world map from rnatrualearth
+# The option returnclass = "sf" gives us an sf object
+world_ne <- ne_countries(
+  scale = "medium", 
+  returnclass = "sf"
+  ) |> 
+  select(continent)
+```
+
+```{r}
+world_ne |> 
+  st_crs()
+```
+
+```{r}
+#| warning: false
+# følger epsg der 4326 har breddegrad som første koordinat
+st_axis_order(authority_compliant = TRUE)
+world_ne |> 
+  st_transform(
+      # have to swap the axis, gives a warning
+    pipeline = "+proj=pipeline +step +proj=axisswap +order=2,1"
+    ) %>%
+  st_transform(3035) %>%
+  plot()
+```
+
+```{r}
+#| warning: false
+# følger gis ingeniører
+st_axis_order(authority_compliant = FALSE)
+world_ne |> 
+  st_transform(3035) %>%
+  plot()
+```
+
+```{r}
+st_axis_order(authority_compliant = FALSE)
+world_ne |> 
+  st_transform(3035) %>%
+  ggplot() +
+  geom_sf() +
+   coord_sf(datum = NULL)
+```
